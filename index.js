@@ -3,11 +3,9 @@
 var fs = require('fs');
 var path = require('path');
 
-function extension()
-
 function parse(loader, source, context, ext, cb) {
     var imports = [];
-    var importPattern = /^\s*#\s*include\s+(['"])(.*)\1\s*$/gmi;
+    var importPattern = /^[ \t]*#[ \t]*include[ \t]+(['"])(.*)\1[ \t]*$/gmi;
     var match = importPattern.exec(source);
 
     while (match != null) {
@@ -29,14 +27,14 @@ function processImports(loader, source, context, ext, imports, cb) {
 
     var imp = imports.pop();
     
-    var name = imp.key;
+    var name = "./" + imp.key;
     if (!path.extname(name)) {
         name += ext;
     }
 
     loader.resolve(context, name, function(err, resolved) {
         if (err) {
-            return cb(err);
+            return cb(Error(err.message + "wtf"));
         }
 
         loader.addDependency(resolved);
@@ -60,7 +58,7 @@ function processImports(loader, source, context, ext, imports, cb) {
 module.exports = function(source) {
     this.cacheable();
     var cb = this.async();
-    parse(this, source, this.context, function(err, bld) {
+    parse(this, source, this.context, path.extname(this.resourcePath), function(err, bld) {
         if (err) {
             return cb(err);
         }
